@@ -48,19 +48,29 @@ const Board: React.FC = () => {
   };
 
   const selectTile = (tile: Tile) => {
-    setBoard(prev => {
-      const newBoard = prev.map(r => r.map(t => ({ ...t })));
-      const current = newBoard[tile.row][tile.col];
+  setBoard(prev => {
+    const newBoard = prev.map(r => r.map(t => ({ ...t })));
+    const current = newBoard[tile.row][tile.col];
 
-      if (!current.selected && (!lastSelected || isAdjacent(current, lastSelected))) {
-        current.selected = true;
-        setLastSelected(current);
-        setSelectedTiles(prevSelected => [...prevSelected, current]);
-      }
+    // Only select if not already selected
+    if (!current.selected && (!lastSelected || isAdjacent(current, lastSelected))) {
+      current.selected = true;
+      setLastSelected(current);
 
-      return newBoard;
-    });
-  };
+      // Add tile only once
+      setSelectedTiles(prevSelected => {
+        // Check if tile already in selectedTiles (by row+col)
+        if (prevSelected.find(t => t.row === current.row && t.col === current.col)) {
+          return prevSelected;
+        }
+        return [...prevSelected, current];
+      });
+    }
+
+    return newBoard;
+  });
+};
+
 
   const handleStart = (tile: Tile) => {
     isDragging.current = true;
