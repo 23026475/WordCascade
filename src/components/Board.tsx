@@ -87,23 +87,53 @@ const Board: React.FC = () => {
     setLastSelected(null);
   };
 
-  const checkWord = () => {
-    if (selectedTiles.length === 0) return;
+const checkWord = () => {
+  if (selectedTiles.length === 0) return;
 
-    const word = selectedTiles.map(t => t.letter).join("");
+  const word = selectedTiles.map(t => t.letter).join("");
 
-    if (DICTIONARY.includes(word.toUpperCase())) {
-      setMessage(`✅ "${word}" is valid!`);
-    } else {
-      setMessage(`❌ "${word}" is not valid`);
-    }
+  if (DICTIONARY.includes(word.toUpperCase())) {
+    setMessage(`✅ "${word}" is valid!`);
 
-    // Reset selection
-    setBoard(prev => prev.map(row => row.map(tile => ({ ...tile, selected: false }))));
-    setSelectedTiles([]);
-    setSelectedWord("");
-    setLastSelected(null);
-  };
+    // Remove selected tiles
+    setBoard(prev => {
+      const newBoard = prev.map(row => row.map(tile => {
+        // If tile was selected, mark as null/empty
+        if (selectedTiles.find(t => t.row === tile.row && t.col === tile.col)) {
+          return { ...tile, letter: "", selected: false };
+        }
+        return { ...tile, selected: false };
+      }));
+
+      // Cascade tiles down
+      for (let col = 0; col < BOARD_SIZE; col++) {
+        let emptySlots = 0;
+        for (let row = BOARD_SIZE - 1; row >= 0; row--) {
+          if (newBoard[row][col].letter === "") {
+            emptySlots++;
+          } else if (emptySlots > 0) {
+            // Move tile down
+            newBoard[row + emptySlots][col].letter = newBoard[row][col].letter;
+            newBoard[row][col].letter = "";
+          }
+        }
+        // Fill empty top slots with new letters
+        for (let row = 0; row < emptySlots; row++) {
+          newBoard[row][col].letter = getRandomLetter();
+        }
+      }
+
+      return newBoard;
+    });
+  } else {
+    setMessage(`❌ "${word}" is not valid`);
+  }
+
+  // Reset selection
+  setSelectedTiles([]);
+  setSelectedWord("");
+  setLastSelected(null);
+};
 
   return (
     <div
